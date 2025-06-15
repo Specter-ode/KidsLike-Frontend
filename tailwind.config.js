@@ -39,7 +39,7 @@ module.exports = {
         sMob: '480px',
         sTablet: '768px',
         sLaptop: '1280px',
-        lessMob: { max: '480px' },
+        lessMob: { max: '479px' },
         lessTablet: { max: '767px' },
         lessLaptop: { max: '1267px' },
         onlyTablet: { min: '768px', max: '1279px' },
