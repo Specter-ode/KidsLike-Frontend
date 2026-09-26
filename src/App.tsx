@@ -4,7 +4,7 @@ import { createBrowserRouter, createRoutesFromElements, RouterProvider } from 'r
 import Root from './routes/Root';
 
 const App: React.FC = () => {
-  const router = createBrowserRouter(createRoutesFromElements(Root), { basename: '/' });
+  const router = createBrowserRouter(createRoutesFromElements(Root), { basename: process.env.PUBLIC_URL || '/' });
   return (
     <div className="min-h-screen lessTablet:pb-[66px]">
       <RouterProvider router={router} />
