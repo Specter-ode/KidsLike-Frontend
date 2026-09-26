@@ -8,6 +8,8 @@ import {
   IGift,
   IGiftData,
   INewChildData,
+  INewNoteData,
+  INote,
   ITask,
   ITaskActiveStatusData,
   ITaskActiveStatusResponse,
@@ -19,8 +21,10 @@ import { AxiosError } from 'axios';
 import * as childApi from '../../services/api/child';
 import * as taskApi from '../../services/api/task';
 import * as giftApi from '../../services/api/gift';
+import * as noteApi from '../../services/api/note';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { RootState } from '../store';
+import type { AppDispatch, RootState } from '../store';
+import { setNotes } from './info-slice';
 import text from './text.json';
 
 export const addChild = createAsyncThunk<IChild, INewChildData, { rejectValue: string; state: RootState }>(
@@ -245,3 +249,97 @@ export const buyGifts = createAsyncThunk<IBuyGiftsResponse, IBuyGiftsData, { rej
     }
   }
 );
+
+export const getNotes = createAsyncThunk<INote[], undefined, { rejectValue: string; state: RootState }>(
+  'info/getNotes',
+  async (_, { rejectWithValue, getState }) => {
+    const { lang } = getState().auth;
+    try {
+      const result = await noteApi.getNotes();
+      return result;
+    } catch (error) {
+      const err = error as AxiosError<string>;
+      toast.error(text[lang].getNotesFailed);
+      console.log('getNotes error: ', error);
+      if (!err.response) {
+        throw error;
+      } else {
+        return rejectWithValue(err.message);
+      }
+    }
+  }
+);
+
+export const addNote = createAsyncThunk<INote, INewNoteData, { rejectValue: string; state: RootState }>(
+  'info/addNote',
+  async (data, { rejectWithValue, getState }) => {
+    const { lang } = getState().auth;
+    try {
+      const result = await noteApi.addNote(data);
+      return result;
+    } catch (error) {
+      const err = error as AxiosError<string>;
+      toast.error(text[lang].addNoteFailed);
+      console.log('addNote error: ', error);
+      if (!err.response) {
+        throw error;
+      } else {
+        return rejectWithValue(err.message);
+      }
+    }
+  }
+);
+
+export const removeNote = createAsyncThunk<string, string, { rejectValue: string; state: RootState }>(
+  'info/removeNote',
+  async (noteId, { rejectWithValue, getState }) => {
+    const { lang } = getState().auth;
+    try {
+      await noteApi.removeNote(noteId);
+      return noteId;
+    } catch (error) {
+      const err = error as AxiosError<string>;
+      toast.error(text[lang].removeNoteFailed);
+      console.log('removeNote error: ', error);
+      if (!err.response) {
+        throw error;
+      } else {
+        return rejectWithValue(err.message);
+      }
+    }
+  }
+);
+
+export const removeAllNotes = createAsyncThunk<void, undefined, { rejectValue: string; state: RootState }>(
+  'info/removeAllNotes',
+  async (_, { rejectWithValue, getState }) => {
+    const { lang } = getState().auth;
+    try {
+      return await noteApi.removeAllNotes();
+    } catch (error) {
+      const err = error as AxiosError<string>;
+      toast.error(text[lang].removeAllNotesFailed);
+      console.log('removeAllNotes error: ', error);
+      if (!err.response) {
+        throw error;
+      } else {
+        return rejectWithValue(err.message);
+      }
+    }
+  }
+);
+
+// Background refresh for the notes page: a plain thunk, so it dispatches no pending/rejected
+// actions (no loaders, no error toasts on every poll)
+export const refreshNotes = () => async (dispatch: AppDispatch, getState: () => RootState) => {
+  const { notesVersion } = getState().info;
+  try {
+    const notes = await noteApi.getNotes();
+    const { info } = getState();
+    // skip the response if notes were added/removed locally while the request was in flight
+    if (info.notesVersion !== notesVersion) return;
+    if (JSON.stringify(info.notes) !== JSON.stringify(notes)) dispatch(setNotes(notes));
+  } catch (error) {
+    console.log('refreshNotes error: ', error);
+  }
+};

@@ -116,3 +116,21 @@ export function hasActiveTaskOnDate(child: IChild, date: string): string {
   }
   return 'no active';
 }
+
+export function formatNoteDate(dateString: string, lang: string, labels: { today: string; yesterday: string }): string {
+  const date = new Date(dateString);
+  const time = date.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+  const startOfDay = (d: Date): number => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const daysAgo = Math.round((startOfDay(new Date()) - startOfDay(date)) / (24 * 60 * 60 * 1000));
+
+  if (daysAgo === 0) return `${labels.today}, ${time}`;
+  if (daysAgo === 1) return `${labels.yesterday}, ${time}`;
+
+  const isSameYear = date.getFullYear() === new Date().getFullYear();
+  const day = date.toLocaleDateString(lang, {
+    day: 'numeric',
+    month: 'long',
+    ...(isSameYear ? {} : { year: 'numeric' }),
+  });
+  return `${day}, ${time}`;
+}

@@ -11,6 +11,7 @@ const LoginPage = lazy(() => import('../pages/LoginPage/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/RegisterPage/RegisterPage'));
 const PlanningPage = lazy(() => import('../pages/PlanningPage/PlanningPage'));
 const AwardsPage = lazy(() => import('../pages/AwardsPage/AwardsPage'));
+const NotesPage = lazy(() => import('../pages/NotesPage/NotesPage'));
 
 const Root = (
   <Route path="/" element={<Layout />} errorElement={<ErrorPage />}>
@@ -54,6 +55,14 @@ const Root = (
         element={
           <Suspense fallback={<Loader />}>
             <AwardsPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="notes"
+        element={
+          <Suspense fallback={<Loader />}>
+            <NotesPage />
           </Suspense>
         }
       />

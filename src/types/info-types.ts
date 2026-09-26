@@ -38,6 +38,9 @@ export interface IInfoState {
   currentChild: IChild;
   selectedDay: string;
   purchasedGifts: string[];
+  notes: INote[];
+  isNotesLoaded: boolean;
+  notesVersion: number;
   isLoading: boolean;
   error: string | null;
 }
@@ -124,4 +127,22 @@ export interface IBuyGiftsResponse {
 export interface IBuyGiftsData {
   childId: string;
   giftIds: string[];
+}
+
+export interface INoteChild {
+  _id: string;
+  name: string;
+  gender: 'male' | 'female';
+}
+
+export interface INote {
+  _id: string;
+  date: string;
+  text: string;
+  child: INoteChild | null;
+}
+
+export interface INewNoteData {
+  childId: string;
+  text: string;
 }

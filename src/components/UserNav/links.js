@@ -18,6 +18,12 @@ export const links = [
     auth: true,
   },
   {
+    id: '6',
+    to: '/notes',
+    text: { 'ru-RU': 'Заметки', 'uk-UA': 'Нотатки' },
+    auth: true,
+  },
+  {
     id: '4',
     to: '/register',
     text: { 'ru-RU': 'Регистрация', 'uk-UA': 'Реєстрація' },

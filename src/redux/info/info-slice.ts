@@ -3,23 +3,31 @@ import { getUser, handleLogin, handleLogout } from '../auth/auth-operations';
 import {
   addChild,
   addGift,
+  addNote,
   addTask,
   buyGifts,
   changeTaskActiveStatus,
   changeTaskCompletedStatus,
   editGift,
   editTask,
+  getNotes,
+  removeAllNotes,
   removeGift,
+  removeNote,
   removeTask,
 } from './info-operations';
-import { IChild, IInfoState } from '../../types/info-types';
+import { IChild, IInfoState, INote } from '../../types/info-types';
 import { getDay } from '../../services/helpers/date';
+import { MAX_NOTES } from '../../services/api/note';
 
 const initialState: IInfoState = {
   children: [] as IChild[],
   currentChild: {} as IChild,
   selectedDay: getDay(),
   purchasedGifts: [],
+  notes: [],
+  isNotesLoaded: false,
+  notesVersion: 0,
   isLoading: false,
   error: null,
 };
@@ -39,6 +47,10 @@ const infoSlice = createSlice({
       store.currentChild.gifts = store.currentChild.gifts.map(gift =>
         gift._id === payload ? { ...gift, isPurchased: !gift.isPurchased } : gift
       );
+    },
+    setNotes: (store, { payload }: PayloadAction<INote[]>) => {
+      store.notes = payload;
+      store.isNotesLoaded = true;
     },
     refreshPurchasedGifts: store => {
       store.purchasedGifts = store.currentChild?.gifts.filter(gift => gift.isPurchased).map(gift => gift._id);
@@ -186,6 +198,32 @@ const infoSlice = createSlice({
         store.currentChild.gifts = payload.gifts;
         store.isLoading = false;
       })
+
+      .addCase(getNotes.fulfilled, (store, { payload }) => {
+        store.notes = payload;
+        store.isNotesLoaded = true;
+        store.isLoading = false;
+      })
+
+      .addCase(addNote.fulfilled, (store, { payload }) => {
+        // the backend keeps only the latest MAX_NOTES notes, the oldest one is dropped
+        // the note may already be in the list if a background refresh fetched it first
+        store.notes = [payload, ...store.notes.filter(note => note._id !== payload._id)].slice(0, MAX_NOTES);
+        store.notesVersion += 1;
+        store.isLoading = false;
+      })
+
+      .addCase(removeNote.fulfilled, (store, { payload }) => {
+        store.notes = store.notes.filter(note => note._id !== payload);
+        store.notesVersion += 1;
+        store.isLoading = false;
+      })
+
+      .addCase(removeAllNotes.fulfilled, store => {
+        store.notes = [];
+        store.notesVersion += 1;
+        store.isLoading = false;
+      })
       .addMatcher(isError, (store, action: PayloadAction<{ message: string }>) => {
         store.isLoading = false;
         if (action.payload) {
@@ -208,5 +246,5 @@ function Loading(action: AnyAction) {
   return action.type.endsWith('pending');
 }
 
-export const { setCurrentChild, setSelectedDay, togglePurchase, refreshPurchasedGifts } = infoSlice.actions;
+export const { setCurrentChild, setSelectedDay, togglePurchase, refreshPurchasedGifts, setNotes } = infoSlice.actions;
 export default infoSlice.reducer;
